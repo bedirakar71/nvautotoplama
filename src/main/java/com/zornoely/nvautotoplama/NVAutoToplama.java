@@ -75,24 +75,29 @@ public final class NVAutoToplama extends JavaPlugin implements Listener {
         Block block = event.getBlock();
 
         Collection<ItemStack> drops = block.getDrops(player.getInventory().getItemInMainHand(), player);
-        if (drops.isEmpty()) return;
-
+        
+        // Normal eşyaların yere düşmesini engelle
         event.setDropItems(false);
 
-        for (ItemStack drop : drops) {
-            var leftover = player.getInventory().addItem(drop);
-            if (!leftover.isEmpty()) {
-                for (ItemStack unadded : leftover.values()) {
-                    block.getWorld().dropItemNaturally(block.getLocation(), unadded);
+        // 1. Eşyaları otomatik envantere topla
+        if (!drops.isEmpty()) {
+            for (ItemStack drop : drops) {
+                var leftover = player.getInventory().addItem(drop);
+                if (!leftover.isEmpty()) {
+                    for (ItemStack unadded : leftover.values()) {
+                        block.getWorld().dropItemNaturally(block.getLocation(), unadded);
+                    }
                 }
             }
         }
 
-        block.setType(Material.AIR);
-        
-        if (event.getExpToDrop() > 0) {
-            player.giveExp(event.getExpToDrop());
-            event.setExpToDrop(0);
+        // 2. Bloktan çıkacak XP'yi yere düşmekten kurtar, direkt oyuncuya ver
+        int exp = event.getExpToDrop();
+        if (exp > 0) {
+            player.giveExp(exp); // XP doğrudan oyuncuya eklenir
+            event.setExpToDrop(0); // Yere XP topu düşmesi engellenir
         }
+
+        block.setType(Material.AIR);
     }
 }
